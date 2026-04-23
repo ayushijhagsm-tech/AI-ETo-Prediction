@@ -264,6 +264,61 @@ def main():
         col_left, col_right = st.columns([1.2, 1], gap="large")
 
         with col_left:
+            # 🌾 Irrigation Input Section
+            st.header("🌾 Irrigation Input Section")
+
+            # STEP 1: Location
+            mode = st.radio("Select Input Mode", ["Manual", "GPS"])
+
+            if mode == "Manual":
+                district = st.selectbox("Select District", ["Ludhiana"])
+                block = st.selectbox("Select Block", ["Ludhiana-1"])
+            else:
+                st.info("📍 GPS location will be detected")
+            # STEP 2: Crop
+            crop = st.selectbox("Select Crop", ["Wheat"])
+            variety = st.selectbox("Select Variety", ["PBW-621", "PBW-550", "HD-2967"])
+
+            # STEP 3: Sowing Date
+            sowing_date = st.date_input("Select Sowing Date")
+
+            # STEP 4: Rain
+            rain_option = st.radio("Rainfall occurred?", ["Yes", "No"])
+            if rain_option == "Yes":
+                rain = st.number_input("Enter rainfall (mm)", min_value=0.0)
+            else:
+                rain = 0.0
+            # STEP 5: Irrigation Method
+            method = st.selectbox("Select Irrigation Method", ["Border", "Sprinkler", "Drip"])
+
+            # STEP 6: Dynamic Inputs
+            if method == "Border":
+                st.subheader("Border Irrigation Inputs")
+                soil = st.selectbox("Soil Type", ["Sandy Loam"])
+                area = st.number_input("Net Cropped Area (ha)")
+                depth = st.number_input("Previous Irrigation Depth (mm)")
+                volume = st.number_input("Volume of Container (litres)")
+                time = st.number_input("Pumping Time (minutes)")
+            elif method == "Sprinkler":
+                st.subheader("Sprinkler Irrigation Inputs")
+                soil = st.selectbox("Soil Type", ["Sandy Loam"])
+                area = st.number_input("Net Cropped Area (ha)")
+                discharge = st.number_input("Discharge Rate (lph)")
+                spacing1 = st.number_input("Spacing of Sprinklers (m)")
+                spacing2 = st.number_input("Spacing of Laterals (m)")
+                lateral = st.number_input("Length of Lateral (m)")
+                submain = st.number_input("Length of Sub-main (m)")
+            elif method == "Drip":
+                st.subheader("Drip Irrigation Inputs")
+                soil = st.selectbox("Soil Type", ["Sandy Loam"])
+                area = st.number_input("Net Cropped Area (ha)")
+                discharge = st.number_input("Emitter Discharge (lph)")
+                wetting = st.number_input("Wetting Percentage (%)")
+                spacing1 = st.number_input("Emitter Spacing (m)")
+                spacing2 = st.number_input("Lateral Spacing (m)")
+                lateral = st.number_input("Length of Lateral (m)")
+                submain = st.number_input("Length of Sub-main (m)")
+
             st.subheader("1️⃣ Select Parameters You Have")
             st.markdown("""
             <div class="info-box">
