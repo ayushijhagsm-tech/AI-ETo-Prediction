@@ -281,13 +281,42 @@ def main():
 
             # STEP 3: Sowing Date
             sowing_date = st.date_input("Select Sowing Date")
-
+            from datetime import date
+            if sowing_date:
+                today = date.today()
+                days = (today - sowing_date).days
+                if days < 0:
+                    st.error("Sowing date cannot be in future")
+                    st.stop()
+            else:
+                st.warning("Please select sowing date")
             # STEP 4: Rain
             rain_option = st.radio("Rainfall occurred?", ["Yes", "No"])
             if rain_option == "Yes":
                 rain = st.number_input("Enter rainfall (mm)", min_value=0.0)
             else:
                 rain = 0.0
+            # 🌱 Kc Logic (backend only)
+            kc = 0
+            if sowing_date:
+                # variety wise total crop duration (days)
+                variety_days = {
+                "PBW-621": 158,
+                "PBW-550": 150,
+                "HD-2967": 157
+            }
+
+            total_days = variety_days[variety]
+
+            # stage division (dynamic)
+            if days <= 0.15 * total_days:
+                kc = 0.5      # Initial
+            elif days <= 0.45 * total_days:
+                kc = 1.36     # Development
+            elif days <= 0.80 * total_days:
+                kc = 1.42     # Mid
+            else:
+                kc = 0.42     # Late
             # STEP 5: Irrigation Method
             method = st.selectbox("Select Irrigation Method", ["Border", "Sprinkler", "Drip"])
 
@@ -517,7 +546,52 @@ def main():
                             <div class="result-unit">mm / day</div>
                         </div>
                         """, unsafe_allow_html=True)
+                    
+                        etc = kc * eto
+                        st.success(f"ETc: {etc:.3f} mm/day")
 
+                        pe = 0.65 * rain
+                        irn = etc - pe
+                        if irn < 0:
+                            irn = 0
+                        st.info(f"IRn: {irn:.3f} mm")
+                        if method == "Border":
+                            efficiency = 0.6
+                        elif method == "Sprinkler":
+                            efficiency = 0.75
+                        else:  # Drip
+                            efficiency = 0.9
+                        irg = irn / 0.7
+                        st.info(f"IRg: {irg:.3f} mm")
+                        # ---- Pumping Time ----
+
+                        if method == "Border":
+                            if volume > 0 and time > 0:
+                                discharge_calc = volume / time   # L/min
+                                discharge_lph = discharge_calc * 60  # convert to L/hr
+
+                                volume_total = irg * 10000 * area  # liters
+                                time_hours = volume_total / discharge_lph
+
+                                st.success(f"Pumping Time: {time_hours:.2f} hours")
+
+                        elif method == "Sprinkler":
+                            if discharge > 0:
+                                volume_total = irg * 10000 * area
+                                time_hours = volume_total / discharge
+
+                                st.success(f"Pumping Time: {time_hours:.2f} hours")
+
+                        elif method == "Drip":
+                            if discharge > 0:
+                                volume_total = irg * 10000 * area
+                                time_hours = volume_total / discharge
+
+                                st.success(f"Pumping Time: {time_hours:.2f} hours")
+                        if etc > 0:
+                            freq = irn / etc
+                            st.success(f"Irrigation Frequency: {freq:.1f} days")
+                        
                     st.markdown("**📥 Input Summary**")
                     st.dataframe(pd.DataFrame({
                         'Parameter'  : [FEATURE_META[f]['label'] for f in cols_],
